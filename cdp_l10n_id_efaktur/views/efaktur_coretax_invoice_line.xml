@@ -1,0 +1,17 @@
+<t t-name="l10n_id_efaktur_coretax.efaktur_coretax_invoice_line">
+    <GoodService>
+        <Opt t-out="line['Opt']"/>
+        <Code t-out="line['Code']"/>
+        <Name t-out="env.context.get('cds_use_display_name', line['Name'])"/>
+        <Unit t-out="line['Unit']"/>
+        <Price t-out="line['Price']"/>
+        <Qty t-out="line['Qty']"/>
+        <TotalDiscount t-out="line['TotalDiscount']"/>
+        <TaxBase t-out="line['TaxBase']"/>
+        <OtherTaxBase t-out="line['OtherTaxBase']"/>
+        <VATRate t-out="line['VATRate']"/>
+        <VAT t-out="line['VAT']"/>
+        <STLGRate t-out="line['STLGRate']"/>
+        <STLG t-out="line['STLG']"/>
+    </GoodService>
+</t>
