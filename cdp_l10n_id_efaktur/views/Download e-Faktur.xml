@@ -1,0 +1,5 @@
+# action = records.download_efaktur()
+if len(record.invoice_line_ids) == 1:
+    action = records.with_context(cds_use_display_name=records.invoice_line_ids.product_id.display_name).download_efaktur()
+else:
+    action = records.download_efaktur() 
