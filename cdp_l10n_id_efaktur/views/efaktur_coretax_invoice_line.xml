@@ -2,7 +2,9 @@
     <GoodService>
         <Opt t-out="line['Opt']"/>
         <Code t-out="line['Code']"/>
-        <Name t-out="env.context.get('cds_use_display_name', line['Name'])"/>
+        <!--<Code t-out="line['Name ']"/>-->
+        <!--Improve ticket https://www.falinwa.com/odoo/helpdesk.ticket/12696?menu_id=992-->
+        <Name t-out="env.context.get('cds_use_display_name', {}).get(line['Name'], line['Name'])"/>
         <Unit t-out="line['Unit']"/>
         <Price t-out="line['Price']"/>
         <Qty t-out="line['Qty']"/>
