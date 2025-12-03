@@ -1,5 +1,8 @@
 # action = records.download_efaktur()
-if len(record.invoice_line_ids) == 1:
-    action = records.with_context(cds_use_display_name=records.invoice_line_ids.product_id.display_name).download_efaktur()
-else:
-    action = records.download_efaktur() 
+
+# Improve ticket https://www.falinwa.com/odoo/helpdesk.ticket/12696?menu_id=992
+context ={}
+for rec in record.invoice_line_ids:
+    context[rec.product_id.name] = rec.product_id.cdp_product_alternative_id.name
+    
+action = records.with_context(cds_use_display_name=context).download_efaktur()
