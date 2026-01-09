@@ -1,8 +1,55 @@
-# action = records.download_efaktur()
+# # action = records.download_efaktur()
 
-# Improve ticket https://www.falinwa.com/odoo/helpdesk.ticket/12696?menu_id=992
-context ={}
-for rec in record.invoice_line_ids:
-    context[rec.product_id.name] = rec.product_id.cdp_product_alternative_id.name
+# # Improve ticket https://www.falinwa.com/odoo/helpdesk.ticket/12696?menu_id=992
+self =  records
+
+if records.l10n_id_coretax_document:
+    l10n_id_coretax_document = records.l10n_id_coretax_document
+    l10n_id_coretax_document.unlink() 
     
-action = records.with_context(cds_use_display_name=context).download_efaktur()
+context_names = {}
+context_vat = {}
+# Menggunakan enumerate agar setiap baris punya index unik (0, 1, 2...)
+for index, rec in enumerate(records.invoice_line_ids):
+    alt_name = rec.product_id.cdp_product_alternative_id.name
+    # Simpan dengan key index
+    # https://www.falinwa.com/odoo/helpdesk.ticket/12696?menu_id=992   
+    context_names[index] = alt_name or rec.name
+    
+    # https://www.falinwa.com/odoo/helpdesk.ticket/13295  
+    vals = {}
+    self.ensure_one()
+    idr = self.env.ref('base.IDR')
+
+    # initialize
+    if not vals.get('lines'):
+        vals['lines'] = []
+
+    product = rec.product_id
+
+    # Separate tax into the regular and luxury component
+    ChartTemplate = self.env['account.chart.template'].with_company(self.company_id)
+    luxury_tax_group = ChartTemplate.ref('l10n_id_tax_group_luxury_goods', raise_if_not_found=False)
+    stlg_tax_group = ChartTemplate.ref('l10n_id_tax_group_stlg', raise_if_not_found=False)
+    zero_tax_group_0 = ChartTemplate.ref('l10n_id_tax_group_0', raise_if_not_found=False)
+    zero_tax_group_exempt = ChartTemplate.ref('l10n_id_tax_group_exempt', raise_if_not_found=False)
+    zero_tax_groups = {zero_tax_group_0, zero_tax_group_exempt} - {False}
+
+    zero_tax = rec.tax_ids.filtered(lambda tax: tax.tax_group_id in zero_tax_groups)
+    luxury_tax = rec.tax_ids.filtered(lambda tax: tax.tax_group_id == luxury_tax_group)
+    stlg_tax = rec.tax_ids.filtered(lambda tax: tax.tax_group_id == stlg_tax_group)
+    regular_tax = rec.tax_ids - luxury_tax - stlg_tax - zero_tax
+    tax_res = rec.tax_ids.compute_all(rec.price_unit, quantity=1, currency=rec.currency_id, product=rec.product_id, partner=rec.partner_id, is_refund=rec.is_refund)
+        
+    line_val = {
+        "TaxBase": idr.round(rec.price_subtotal),  # DPP
+        "VATRate": 12,
+    }
+    if rec.move_id.l10n_id_kode_transaksi == "01" or (not regular_tax and not zero_tax):
+        line_val['OtherTaxBase'] = line_val['TaxBase']
+    else:
+        line_val['OtherTaxBase'] = idr.round(rec.price_subtotal * 11 / 12)    
+    
+    context_vat[index] = int(idr.round(line_val['OtherTaxBase'] * line_val['VATRate'] / 100))
+
+action = records.with_context(cds_custom_names=context_names, cds_custom_vat=context_vat).download_efaktur()

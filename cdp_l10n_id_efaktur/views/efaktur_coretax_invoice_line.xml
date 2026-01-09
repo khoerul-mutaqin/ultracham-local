@@ -3,8 +3,10 @@
         <Opt t-out="line['Opt']"/>
         <Code t-out="line['Code']"/>
         <!--<Code t-out="line['Name ']"/>-->
-        <!--Improve ticket https://www.falinwa.com/odoo/helpdesk.ticket/12696?menu_id=992-->
-        <Name t-out="env.context.get('cds_use_display_name', {}).get(line['Name'], line['Name'])"/>
+        <!--https://www.falinwa.com/odoo/helpdesk.ticket/12696?menu_id=992-->
+        <t t-set="line_idx" t-value="line_index"/> 
+        <t t-set="custom_name" t-value="env.context.get('cds_custom_names', {}).get(line_idx)"/>
+        <Name t-out="custom_name or line['Name']"/>
         <Unit t-out="line['Unit']"/>
         <Price t-out="line['Price']"/>
         <Qty t-out="line['Qty']"/>
@@ -12,7 +14,11 @@
         <TaxBase t-out="line['TaxBase']"/>
         <OtherTaxBase t-out="line['OtherTaxBase']"/>
         <VATRate t-out="line['VATRate']"/>
-        <VAT t-out="line['VAT']"/>
+
+        <!--https://www.falinwa.com/odoo/helpdesk.ticket/13295-->    
+        <t t-set="amount_tax" t-value="env.context.get('cds_custom_vat', {}).get(line_idx)"/>
+        <VAT t-out="amount_tax or line['VAT']"/>
+        <!--<VAT t-out="line['VAT']"/>-->
         <STLGRate t-out="line['STLGRate']"/>
         <STLG t-out="line['STLG']"/>
     </GoodService>
