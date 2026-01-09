@@ -1,0 +1,216 @@
+<t t-name="purchase.report_purchaseorder_document">
+    <t t-call="web.external_layout">
+        <t t-set="o" t-value="o.with_context(lang=o.partner_id.lang)"/>
+
+        <div class="row mb-2">
+            <div class="col">
+                <div>
+                    <span style="display:inline-block; width:80px;"><strong>Kepada</strong></span>
+                    <span>:</span>
+                    <span t-esc="o.partner_id.parent_id.name or o.partner_id.name"/>
+                </div>
+                <div>
+                    <span style="display:inline-block; width:80px;"><strong>Phone</strong></span>
+                    <span>:</span>
+                    <span t-esc="o.partner_id.phone or o.partner_id.mobile or ''"/>
+                </div>
+                <div>
+                    <span style="display:inline-block; width:80px;"><strong>Email</strong></span>
+                    <span>:</span>
+                    <span t-esc="o.partner_id.email"/>
+                </div>
+                <div>
+                    <span style="display:inline-block; width:80px;"><strong>Attn</strong></span>
+                    <span>:</span>
+                    <span t-esc="o.partner_id.name"/>
+                </div>
+            </div>
+        
+            <div class="col" style="margin-left: 200px;">
+                <div>
+                    <span style="display:inline-block; width:80px;"><strong>No. Form</strong></span>
+                    <span>:</span>
+                    <span>FR-MA-27</span>
+                </div>
+                <div>
+                    <span style="display:inline-block; width:80px;"><strong>Revisi</strong></span>
+                    <span>:</span>
+                    <span>00</span>
+                </div>
+                <div>
+                    <span style="display:inline-block; width:80px;"><strong>No. PO</strong></span>
+                    <span>:</span>
+                    <span t-field="o.name"/>
+                </div>
+                <div>
+                    <span style="display:inline-block; width:80px;"><strong>Tanggal</strong></span>
+                    <span>:</span>
+                    <!--<span t-field="o.date_approve" t-options="{'date_only': 'true'}"/>-->
+                    <span t-esc="o.date_approve.strftime('%d/%m/%Y') if o.date_approve else '' "/>
+                </div>
+            </div>
+        </div>
+        
+        <!-- === Tampilkan hanya jika statusnya 'purchase' atau 'done' === -->
+        <t t-if="o.state in ['purchase', 'done']">
+            <div class="page">
+                <div class="oe_structure"/>
+
+                <div class="mt-4">
+                    <t t-set="layout_document_title">
+                        <t t-if="o.state in ['purchase', 'done']">Purchase Order</t>
+                    </t>
+                </div>
+            <p>Dengan ini kami memesan barang sebagai berikut:</p>
+
+                <table class="o_has_total_table table o_main_table table-borderless">
+                    <thead>
+                        <tr>
+                            <th class="text-start"><strong>Nama Barang</strong></th>
+                            <th class="text-end"><strong>Jumlah</strong></th>
+                            <th class="text-end"><strong>Unit</strong></th>
+                            <th class="text-end"><strong>Harga Satuan</strong></th>
+                            <th class="text-end"><strong>Harga Jumlah</strong></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-set="current_subtotal" t-value="0"/>
+                        <t t-foreach="o.order_line" t-as="line">
+                            <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal"/>
+                            <tr t-att-class="'fw-bold o_line_section' if line.display_type == 'line_section' else 'fst-italic o_line_note' if line.display_type == 'line_note' else ''">
+                                <t t-if="not line.display_type">
+                                    <td class="text-start"><span t-field="line.x_alt_name_id"/><div t-if="line.product_id.product_tmpl_id.description_purchase"><small t-field="line.product_id.product_tmpl_id.description_purchase"/></div></td>
+                                    <td class="text-end">
+                                        <span t-field="line.product_qty"/>
+                                        <span t-if="line.product_packaging_id">
+                                            (<span t-field="line.product_packaging_qty" t-options="{&quot;widget&quot;: &quot;integer&quot;}"/> <span t-field="line.product_packaging_id"/>)
+                                        </span>
+                                    </td>
+                                    <td class="text-end"><span t-field="line.product_uom"/></td>
+                                    <td class="text-end"><span t-field="line.price_unit"/></td>
+                                    <!--<td class="text-end"><span t-out="', '.join([(tax.invoice_label or tax.name) for tax in line.taxes_id])"/></td>-->
+                                    <td class="text-end"><span t-field="line.price_subtotal" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}"/></td>
+                                </t>
+                                <t t-if="line.display_type == 'line_section'">
+                                    <td colspan="99"><span t-field="line.name"/></td>
+                                    <t t-set="current_section" t-value="line"/>
+                                    <t t-set="current_subtotal" t-value="0"/>
+                                </t>
+                                <t t-if="line.display_type == 'line_note'">
+                                    <td colspan="99"><span t-field="line.name"/></td>
+                                </t>
+                            </tr>
+                            <t t-if="current_section and (line_last or o.order_line[line_index+1].display_type == 'line_section')">
+                                <tr class="is-subtotal text-end">
+                                    <td colspan="99">
+                                        <strong class="mr16">Subtotal</strong>
+                                        <span t-out="current_subtotal" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </t>
+                    </tbody>
+                </table>
+                
+                <div id="total" class="row justify-content-end mt-n3">
+                    <div class="col-4">
+                        <table class="o_total_table table table-borderless">
+                            <t t-call="purchase.document_tax_totals">
+                                <t t-set="tax_totals" t-value="o.tax_totals"/>
+                                <t t-set="currency" t-value="o.currency_id"/>
+                            </t>
+                        </table>
+                    </div>
+                </div>
+                <p>
+                        <strong>Note : TOLONG LAMPIRKAN COA/TDS<br/>
+                        JIKA TIDAK BARANG DITOLAK</strong>
+                    </p>
+                
+                
+                <p t-field="o.notes" class="mt-4"/>
+                <div class="oe_structure"/>
+                
+                <div style="margin-top: 10px;">
+                    <div>
+                        <span style="display:inline-block; width:180px;"><strong>a. Tanggal Pengiriman</strong></span>
+                        <span>:</span>
+                        <span t-esc="o.x_studio_delivery_date_from_vendor.strftime('%d/%m/%Y') if o.x_studio_delivery_date_from_vendor else ''"/>
+                    </div>
+                    <div>
+                        <span style="display:inline-block; width:180px;"><strong>b. Dikirim ke</strong></span>
+                        <span>:</span>
+                        <span t-esc="o.company_id.name or ''"/>
+                    </div>
+                    <div>
+                        <span style="display:inline-block; width:187px;"/>
+                        <span t-esc="o.picking_type_id.warehouse_id.partner_id.street or ''"/>
+                    </div>
+                    <div>
+                        <span style="display:inline-block; width:187px;"/>
+                        <span t-esc="o.picking_type_id.warehouse_id.partner_id.street2 or ''"/>
+                    </div>
+                    <div>
+                        <span style="display:inline-block; width:187px;"/>
+                        <span t-esc="o.picking_type_id.warehouse_id.partner_id.city or ''"/>
+                    </div>
+                    <div>
+                        <span style="display:inline-block; width:180px;"><strong>c. Pembayaran</strong></span>
+                        <span>:</span>
+                        <span>Transfer</span>
+                        <span t-field="o.payment_term_id"/>
+                    </div>
+                        <div>
+                            <span style="display:inline-block; width:187px;"/>
+                            <span>Bank</span>
+                            <span t-esc="o.partner_id.parent_id.bank_ids.bank_id.name or o.partner_id.bank_ids.bank_id.name"/>
+                        </div>
+                        <div>
+                            <span style="display:inline-block; width:187px;"/>
+                            <span>A/N.</span>
+                            <span t-esc="o.partner_id.parent_id.name or o.partner_id.name"/>
+                        </div>
+                        <div>
+                            <span style="display:inline-block; width:187px;"/>
+                            <span>No. Rek</span>
+                            <span t-esc="o.partner_id.parent_id.bank_ids.acc_number or o.partner_id.bank_ids.acc_number"/>
+                        </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <p>Hormat Kami,</p>
+                    <t t-if="o.qr_img">
+                        <img t-att-src="'data:image/png;base64,%s' % o.qr_img.decode('utf-8')" style="max-height:100px;"/>
+                    </t>
+                    <p>Mario Aditama</p>
+                </div>
+                
+                
+                <t t-set="base_address" t-value="o.env['ir.config_parameter'].sudo().get_param('web.base.url')"/>
+                <t t-set="portal_url" t-value="base_address + '/my/purchase/' + str(o.id) + '#portal_connect_software_modal'"/>
+                <div t-if="any(u._is_portal() for u in o.partner_id.user_ids)" class="text-center">
+                    <a t-att-href="portal_url">Connect your software</a> with <t t-out="o.company_id.name"/> to create quotes automatically.
+                </div>
+            </div>
+        </t>
+            
+        <!-- === Jika status cancel === -->
+        <t t-elif="o.state == 'cancel'">
+            <div class="page text-center mt-5">
+                <h3>Dokumen tidak tersedia</h3>
+                <p>Purchase Order ini telah <strong>dibatalkan</strong>.</p>
+            </div>
+        </t>
+
+        <!-- === Jika status draft, sent, to approve === -->
+        <t t-else="">
+            <div class="page text-center mt-5">
+                <h3>Dokumen belum tersedia</h3>
+                <p>Purchase Order ini masih dalam proses <strong>draft</strong> atau <strong>menunggu persetujuan</strong>.</p>
+            </div>
+        </t>
+
+
+
+    </t>
+</t>

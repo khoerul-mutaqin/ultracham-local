@@ -1,0 +1,50 @@
+<odoo>
+    <data>
+        <!-- ir.actions.server -->
+        <record model="ir.actions.server" id="x_server_action_fal_unique_name_in_product_product_picking_wizard">
+            <field name="name">Execute Code</field>
+            <field name="model_id" ref="product.model_product_product" />
+            <field name="state">code</field>
+            <field name="code">
+if record.name:
+    clean_name = record.name.rstrip()
+    clean_name = clean_name.lower()
+    existing = env[record._name].search([
+        ('name', 'ilike', clean_name), 
+        ('id', '!=', record.id),
+    ])
+    similarity_name = False
+    for ex in existing:
+        ex_name = ex.name.rstrip()
+        ex_name = ex_name.lower()
+        if ex_name == clean_name:
+           similarity_name=  True
+    if existing and similarity_name:
+        raise UserError(f"Nama produk {existing.name} sudah digunakan oleh record lain. Gunakan Nama yang unik.")
+            </field>
+        </record>
+
+        <record model="ir.actions.server" id="x_server_action_fal_unique_name_in_product_template_picking_wizard">
+            <field name="name">Execute Code</field>
+            <field name="model_id" ref="product.model_product_template" />
+            <field name="state">code</field>
+            <field name="code">
+if record.name:
+    clean_name = record.name.rstrip()
+    clean_name = clean_name.lower()
+    existing = env[record._name].search([
+        ('name', 'ilike', clean_name), 
+        ('id', '!=', record.id),
+    ])
+    similarity_name = False
+    for ex in existing:
+        ex_name = ex.name.rstrip()
+        ex_name = ex_name.lower()
+        if ex_name == clean_name:
+           similarity_name=  True
+    if existing and similarity_name:
+        raise UserError(f"Nama produk {existing.name} sudah digunakan oleh record lain. Gunakan Nama yang unik.")
+            </field>
+        </record>
+    </data>
+</odoo>

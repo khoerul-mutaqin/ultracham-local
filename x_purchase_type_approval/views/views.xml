@@ -1,0 +1,65 @@
+<odoo>
+  <data>
+    <!-- server action to the one above -->
+    <record model="ir.actions.server" id="action_generate_approval_request">
+      <field name="name">[FAL][APPR] Generate RfQ</field>
+      <field name="model_id" ref="stock.model_approval_request"/>
+      <field name="state">code</field>
+      <field name="code">
+# Available variables:
+#  - env: environment on which the action is triggered
+#  - model: model of the record on which the action is triggered; is a void recordset
+#  - record: record on which the action is triggered; may be void
+#  - records: recordset of all records on which the action is triggered in multi-mode; may be void
+#  - time, datetime, dateutil, timezone: useful Python libraries
+#  - float_compare: utility function to compare floats based on specific precision
+#  - b64encode, b64decode: functions to encode/decode binary data
+#  - log: log(message, level='info'): logging function to record debug information in ir.logging table
+#  - _logger: _logger.info(message): logger to emit messages in server logs
+#  - UserError: exception class for raising user-facing warning messages
+#  - Command: x2many commands namespace
+# To return an action, assign: action = {...}
+order = False
+for line in record.product_line_ids:
+    if line.quantity > 0:
+        if not order:
+            ord_vals = {
+                'partner_id': 7092,
+                'origin': record.name,
+                'picking_type_id': record.x_deliver_to_id.id
+            }
+            order = env['purchase.order'].create(ord_vals)
+        
+        ord_line_vals = {
+            'product_qty': line.quantity,
+            'product_id': line.product_id.id,
+            'product_uom': line.product_uom_id.id,
+            'order_id': order.id,
+        }
+        new_line = env['purchase.order.line'].create(ord_line_vals)
+        
+        line.write({
+            'purchase_order_line_id': new_line.id
+        })
+        
+        order.write({
+            'order_line': [(4, new_line.id)]
+        })
+    else:
+        pass
+    
+# https://www.falinwa.com/odoo/action-1346/263/tickets/12124
+# update purchase type
+for request in record:
+    purchases = request.product_line_ids.purchase_order_line_id.order_id
+    if request.category_id.sequence_code == 'FPB': 
+        x_studio_purchase_type = 'Lokal'
+    else: 
+        x_studio_purchase_type = 'Import'
+    # Memperbarui Purchase Orders yang ditemukan        
+    if purchases:
+        purchases['x_studio_purchase_type'] = x_studio_purchase_type    
+      </field>
+    </record>
+  </data>
+</odoo>
