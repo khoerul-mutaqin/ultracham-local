@@ -1,0 +1,21 @@
+<data>
+     <xpath expr="//div[@id='informations']" position="inside">
+            <t t-set="do" t-value="doc.picking_ids"/>
+            <!--<t t-set="do" t-value="env['stock.picking'].search([('origin', '=', doc.name )])"/>-->
+            <!--<t t-set="do" t-value="env['stock.picking'].search([('origin', '=', doc.name )], limit=1)"/>-->
+            <div t-if="do" class="col">
+                <strong>DO</strong>
+                 <p class="m-0">
+                    <t t-esc="', '.join(do.mapped('name'))"/>
+                </p>
+            </div>
+            <div t-if="do" class="col">
+                <strong>Schedule Date</strong>
+                <p class="m-0">
+                    <!--<t t-set="schedule_date" t-value="do[:1].scheduled_date"/>-->
+                    <!--<t t-esc="schedule_date"/>-->
+                    <t t-esc="', '.join(map(str, do.mapped('scheduled_date')))"/>
+                </p>                
+            </div>
+        </xpath>
+</data>
