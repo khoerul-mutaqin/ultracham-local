@@ -1,8 +1,38 @@
-# action = records.download_efaktur()
+# # action = records.download_efaktur()
 
-# Improve ticket https://www.falinwa.com/odoo/helpdesk.ticket/12696?menu_id=992
-context ={}
-for rec in record.invoice_line_ids:
-    context[rec.product_id.name] = rec.product_id.cdp_product_alternative_id.name
-    
-action = records.with_context(cds_use_display_name=context).download_efaktur()
+# # Improve ticket https://www.falinwa.com/odoo/helpdesk.ticket/12696?menu_id=992
+self =  records
+l10n_id_coretax_document = records.l10n_id_coretax_document
+l10n_id_coretax_document.unlink()
+
+context_names = {}
+context_vat = {}
+
+for r in records:    
+    invoice_key = r.name 
+
+    # Inisialisasi dictionary per invoice agar tidak error saat dipanggil di bawah
+    if invoice_key not in context_names:
+        context_names[invoice_key] = {}
+    if invoice_key not in context_vat:
+        context_vat[invoice_key] = {}
+            
+    for index, rec in enumerate(r.invoice_line_ids):
+        alt_name = rec.product_id.cdp_product_alternative_id.name
+        line_name = alt_name or rec.name
+        
+        # Calculate VAT amount
+        vat_amount = 0
+        if rec.tax_ids.price_include_override == 'tax_excluded':
+            amount_raw = (rec.quantity * rec.price_unit) * (rec.tax_ids.amount / 100)
+            vat_amount = round(amount_raw)
+        
+        # Simpan menggunakan index sebagai sub-key
+        context_names[invoice_key][index] = line_name
+        context_vat[invoice_key][index] = vat_amount
+
+# Masukkan ke context
+action = records.with_context(
+    cds_custom_names=context_names, 
+    cds_custom_vat=context_vat
+).download_efaktur()
