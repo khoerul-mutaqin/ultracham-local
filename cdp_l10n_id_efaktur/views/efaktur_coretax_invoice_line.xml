@@ -1,19 +1,33 @@
 <t t-name="l10n_id_efaktur_coretax.efaktur_coretax_invoice_line">
-    <GoodService>
-        <Opt t-out="line['Opt']"/>
-        <Code t-out="line['Code']"/>
-        <!--<Code t-out="line['Name ']"/>-->
-        <!--Improve ticket https://www.falinwa.com/odoo/helpdesk.ticket/12696?menu_id=992-->
-        <Name t-out="env.context.get('cds_use_display_name', {}).get(line['Name'], line['Name'])"/>
-        <Unit t-out="line['Unit']"/>
-        <Price t-out="line['Price']"/>
-        <Qty t-out="line['Qty']"/>
-        <TotalDiscount t-out="line['TotalDiscount']"/>
-        <TaxBase t-out="line['TaxBase']"/>
-        <OtherTaxBase t-out="line['OtherTaxBase']"/>
-        <VATRate t-out="line['VATRate']"/>
-        <VAT t-out="line['VAT']"/>
-        <STLGRate t-out="line['STLGRate']"/>
-        <STLG t-out="line['STLG']"/>
-    </GoodService>
-</t>
+            <GoodService>
+                <Opt t-out="line['Opt']"/>
+                <Code t-out="line['Code']"/>
+                 <!--https://www.falinwa.com/odoo/helpdesk.ticket/12696?menu_id=992-->
+                <t t-set="inv_name" t-value="move['RefDesc']"/>
+                <t t-set="prod_name" t-value="line['Name']"/>
+                <t t-set="line_idx" t-value="line_index"/> 
+                <!--name-->
+                <t t-set="custom_data_map" t-value="env.context.get('cds_custom_names', {}).get(inv_name, {})"/>
+                <t t-set="custom_name_x" t-value="custom_data_map.get(line_idx)"/>
+                
+                <Name t-out="custom_name_x or line['Name']"/>   
+                <!--<Name t-out="line['Name']"/>-->
+
+                <Unit t-out="line['Unit']"/>
+                <Price t-out="line['Price']"/>
+                <Qty t-out="line['Qty']"/>
+                <TotalDiscount t-out="line['TotalDiscount']"/>
+                <TaxBase t-out="line['TaxBase']"/>
+                <OtherTaxBase t-out="line['OtherTaxBase']"/>
+                <VATRate t-out="line['VATRate']"/>
+                
+                <!--vat-->
+                <t t-set="custom_data_map_vat" t-value="env.context.get('cds_custom_vat', {}).get(inv_name, {})"/>
+                <t t-set="custom_name_vat" t-value="custom_data_map_vat.get(line_idx)"/>
+                <VAT t-out="custom_name_vat or line['VAT']"/>   
+                
+                <!--<VAT t-out="line['VAT']"/>-->
+                <STLGRate t-out="line['STLGRate']"/>
+                <STLG t-out="line['STLG']"/>
+            </GoodService>
+        </t>
